@@ -1,6 +1,6 @@
 public class Hamster extends Pet {
-    public Hamster(String nome, String raca) {
-        super(nome, raca);
+    public Hamster(String nome, String raca, String imagem) {
+        super(nome, raca, imagem);
     }
 
     @Override

@@ -1,2 +1,1 @@
-Cachorro;Bulaxa;Vagabundo
-Gato;Cheddar;Lranjinha
+Cachorro;Bulaxa;Vagabundo;C:\Users\andre.rocha\Downloads\2025-06-14_13-42.png

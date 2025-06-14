@@ -1,6 +1,6 @@
 public class Papagaio extends Pet {
-    public Papagaio(String nome, String raca) {
-        super(nome, raca);
+    public Papagaio(String nome, String raca, String imagem) {
+        super(nome, raca, imagem);
     }
 
     @Override
