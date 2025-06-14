@@ -5,6 +5,6 @@ public class Hamster extends Pet {
 
     @Override
     public String falar() {
-        return "Squeak!";
+        return nome + " faz barulhinhos fofos!";
     }
 }

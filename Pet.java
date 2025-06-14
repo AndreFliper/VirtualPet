@@ -1,7 +1,9 @@
 public abstract class Pet {
     protected String nome;
     protected String raca;
-    protected String imagem; // NOVO
+    protected String imagem;
+    protected double felicidade = 100.0; // %
+    protected double sujeira = 0.0; // %
 
     public Pet(String nome, String raca, String imagem) {
         this.nome = nome;
@@ -12,19 +14,49 @@ public abstract class Pet {
     public String getNome() {
         return nome;
     }
+
     public String getRaca() {
         return raca;
     }
+
     public String getImagem() {
         return imagem;
     }
 
-    public abstract String falar();
+    public double getFelicidade() {
+        return felicidade;
+    }
 
-    public String carinho() {
-        return nome + " recebeu carinho.";
+    public double getSujeira() {
+        return sujeira;
     }
+
+    public void decreaseHappiness(double amount) {
+        felicidade = Math.max(0, felicidade - amount);
+    }
+
+    public void increaseDirt(double amount) {
+        sujeira = Math.min(100, sujeira + amount);
+    }
+
+    public String brincar() {
+        felicidade = Math.min(100, felicidade + 10);
+        return nome + " adorou brincar e sua felicidade aumentou";
+    }
+
+    public String passear() {
+        felicidade = Math.min(100, felicidade + 10);
+        return nome + " adorou o passeio e ficou feliz";
+    }
+
+    public void darBanho() {
+        sujeira = 0.0;
+    }
+
     public String petisco() {
-        return nome + " ganhou um petisco.";
+        felicidade = Math.min(100, felicidade + 5);
+        return nome + " amou o petisco e ficou alegre";
     }
+
+    public abstract String falar();
 }

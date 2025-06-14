@@ -5,6 +5,6 @@ public class Gato extends Pet {
 
     @Override
     public String falar() {
-        return "Miau!";
+        return nome + " diz: Miau!";
     }
 }

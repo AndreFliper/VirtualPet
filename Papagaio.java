@@ -5,6 +5,6 @@ public class Papagaio extends Pet {
 
     @Override
     public String falar() {
-        return "Loro qué biscoito!";
+        return nome + " diz: Loro qué biscoito!";
     }
 }
