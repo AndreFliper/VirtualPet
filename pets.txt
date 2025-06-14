@@ -1,0 +1,2 @@
+Cachorro;Bulaxa;Vagabundo
+Gato;Cheddar;Lranjinha
