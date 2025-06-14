@@ -20,9 +20,11 @@ public class VirtualPetGUI extends JFrame {
 
     private JTextArea output = new JTextArea(5, 20);
 
-    private DefaultListModel<String> petListModel = new DefaultListModel<>();
-    private JList<String> petList = new JList<>(petListModel);
-    private JLabel petImage = new JLabel();
+    private JLabel petImageLabel = new JLabel();
+    private JProgressBar happinessBar = new JProgressBar(0, 100);
+    private JProgressBar dirtinessBar = new JProgressBar(0, 100);
+
+    private Timer timer;
 
     public VirtualPetGUI() {
         setTitle("Virtual Pet");
@@ -34,12 +36,10 @@ public class VirtualPetGUI extends JFrame {
         buildMenuPanel();
 
         add(panelCreate, "Create");
-        add(panelMenu, "Menu");
         add(panelInteract, "Interact");
+        add(panelMenu, "Menu");
 
         loadPets();
-        updatePetList();
-
         showPanel("Menu");
 
         pack();
@@ -64,7 +64,6 @@ public class VirtualPetGUI extends JFrame {
         panelCreate.add(nomeField);
         panelCreate.add(new JLabel("Raça:"));
         panelCreate.add(racaField);
-
         panelCreate.add(new JLabel("Imagem:"));
         panelCreate.add(imagemField);
 
@@ -74,55 +73,42 @@ public class VirtualPetGUI extends JFrame {
 
         JButton criarBtn = new JButton("Criar Pet");
         criarBtn.addActionListener(e -> criarPet());
-        panelCreate.add(criarBtn);
-
         JButton voltarBtn = new JButton("Voltar");
         voltarBtn.addActionListener(e -> showPanel("Menu"));
+
+        panelCreate.add(criarBtn);
         panelCreate.add(voltarBtn);
     }
 
     private void buildMenuPanel() {
         panelMenu.setLayout(new BorderLayout());
 
-        petList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        petList.addListSelectionListener(e -> updateMenuPetImage());
+        JPanel listPanel = new JPanel();
+        listPanel.setLayout(new BoxLayout(listPanel, BoxLayout.Y_AXIS));
 
-        JButton criarNovoBtn = new JButton("Novo Pet");
-        criarNovoBtn.addActionListener(e -> showPanel("Create"));
+        JButton criarNovo = new JButton("Criar Novo Pet");
+        criarNovo.addActionListener(e -> showPanel("Create"));
 
-        JButton selecionarBtn = new JButton("Selecionar Pet");
-        selecionarBtn.addActionListener(e -> {
-            int index = petList.getSelectedIndex();
-            if (index >= 0) {
-                currentPet = pets.get(index);
-                output.setText("");
-                updatePetImage();
-                showPanel("Interact");
+        panelMenu.add(new JScrollPane(listPanel), BorderLayout.CENTER);
+        panelMenu.add(criarNovo, BorderLayout.SOUTH);
+
+        // Atualiza lista sempre que abrir
+        panelMenu.addComponentListener(new ComponentAdapter() {
+            public void componentShown(ComponentEvent e) {
+                listPanel.removeAll();
+                for (Pet pet : pets) {
+                    JButton btn = new JButton(pet.getNome());
+                    btn.addActionListener(a -> {
+                        currentPet = pet;
+                        showPanel("Interact");
+                        updatePetImage();
+                    });
+                    listPanel.add(btn);
+                }
+                listPanel.revalidate();
+                listPanel.repaint();
             }
         });
-
-        JButton excluirBtn = new JButton("Excluir Pet");
-        excluirBtn.addActionListener(e -> {
-            int index = petList.getSelectedIndex();
-            if (index >= 0) {
-                pets.remove(index);
-                updatePetList();
-                savePets();
-                petImage.setIcon(null);
-            }
-        });
-
-        JPanel buttons = new JPanel();
-        buttons.add(criarNovoBtn);
-        buttons.add(selecionarBtn);
-        buttons.add(excluirBtn);
-
-        JPanel left = new JPanel(new BorderLayout());
-        left.add(new JScrollPane(petList), BorderLayout.CENTER);
-        left.add(buttons, BorderLayout.SOUTH);
-
-        panelMenu.add(left, BorderLayout.WEST);
-        panelMenu.add(petImage, BorderLayout.CENTER);
     }
 
     private void buildInteractPanel() {
@@ -130,26 +116,43 @@ public class VirtualPetGUI extends JFrame {
 
         JPanel buttons = new JPanel();
         JButton falarBtn = new JButton("Falar");
-        JButton carinhoBtn = new JButton("Carinho");
+        JButton brincarBtn = new JButton("Brincar");
         JButton petiscoBtn = new JButton("Petisco");
+        JButton passearBtn = new JButton("Passear");
+        JButton banhoBtn = new JButton("Dar Banho");
         JButton voltarBtn = new JButton("Voltar");
 
         falarBtn.addActionListener(e -> interagir("falar"));
-        carinhoBtn.addActionListener(e -> interagir("carinho"));
+        brincarBtn.addActionListener(e -> interagir("brincar"));
         petiscoBtn.addActionListener(e -> interagir("petisco"));
-        voltarBtn.addActionListener(e -> showPanel("Menu"));
+        passearBtn.addActionListener(e -> interagir("passear"));
+        banhoBtn.addActionListener(e -> interagir("banho"));
+        voltarBtn.addActionListener(e -> {
+            if (timer != null) timer.stop();
+            showPanel("Menu");
+        });
 
         buttons.add(falarBtn);
-        buttons.add(carinhoBtn);
+        buttons.add(brincarBtn);
         buttons.add(petiscoBtn);
+        buttons.add(passearBtn);
+        buttons.add(banhoBtn);
         buttons.add(voltarBtn);
 
-        JPanel top = new JPanel(new BorderLayout());
-        top.add(buttons, BorderLayout.NORTH);
-        top.add(petImage, BorderLayout.CENTER);
+        JPanel rightPanel = new JPanel();
+        rightPanel.setLayout(new BoxLayout(rightPanel, BoxLayout.Y_AXIS));
+        rightPanel.add(petImageLabel);
+        rightPanel.add(new JLabel("Felicidade:"));
+        rightPanel.add(happinessBar);
+        rightPanel.add(new JLabel("Sujeira:"));
+        rightPanel.add(dirtinessBar);
 
-        panelInteract.add(top, BorderLayout.NORTH);
+        panelInteract.add(buttons, BorderLayout.NORTH);
         panelInteract.add(new JScrollPane(output), BorderLayout.CENTER);
+        panelInteract.add(rightPanel, BorderLayout.EAST);
+
+        happinessBar.setValue(100);
+        dirtinessBar.setValue(0);
     }
 
     private void criarPet() {
@@ -180,7 +183,6 @@ public class VirtualPetGUI extends JFrame {
 
         pets.add(currentPet);
         savePets();
-        updatePetList();
         showPanel("Menu");
     }
 
@@ -188,13 +190,56 @@ public class VirtualPetGUI extends JFrame {
         try {
             if (currentPet == null) throw new PetException("Nenhum pet selecionado.");
             String res = "";
-            if (acao.equals("falar")) res = currentPet.falar();
-            if (acao.equals("carinho")) res = currentPet.carinho();
-            if (acao.equals("petisco")) res = currentPet.petisco();
+            switch (acao) {
+                case "falar": res = currentPet.falar(); break;
+                case "brincar": res = currentPet.carinho(); updateHappiness(100); break;
+                case "petisco": res = currentPet.petisco(); break;
+                case "passear": res = currentPet.carinho(); updateHappiness(100); break;
+                case "banho": res = currentPet.getNome() + " tomou um banho!"; dirtinessBar.setValue(0); break;
+            }
             output.append(res + "\n");
         } catch (PetException ex) {
             JOptionPane.showMessageDialog(this, ex.getMessage());
         }
+    }
+
+    private void updateHappiness(int amount) {
+        happinessBar.setValue(Math.min(100, amount));
+    }
+
+    private void updatePetImage() {
+        if (currentPet != null) {
+            ImageIcon icon = new ImageIcon(currentPet.getImagem());
+            Image img = icon.getImage().getScaledInstance(200, 200, Image.SCALE_SMOOTH);
+            petImageLabel.setIcon(new ImageIcon(img));
+            happinessBar.setValue(100);
+            dirtinessBar.setValue(0);
+
+            if (timer != null) timer.stop();
+
+            timer = new Timer(1000, e -> updateBars());
+            timer.start();
+        }
+    }
+
+    private void updateBars() {
+        int happiness = happinessBar.getValue();
+        int dirtiness = dirtinessBar.getValue();
+
+        happiness = Math.max(0, happiness - 1);
+        dirtiness = Math.min(100, dirtiness + 2);
+
+        happinessBar.setValue(happiness);
+        dirtinessBar.setValue(dirtiness);
+
+        happinessBar.setForeground(getGradientColor(happiness));
+        dirtinessBar.setForeground(getGradientColor(100 - dirtiness));
+    }
+
+    private Color getGradientColor(int value) {
+        int r = (int) Math.min(255, 255 * (100 - value) / 100.0);
+        int g = (int) Math.min(255, 255 * (value) / 100.0);
+        return new Color(r, g, 0);
     }
 
     private void showPanel(String name) {
@@ -240,34 +285,11 @@ public class VirtualPetGUI extends JFrame {
                 }
             }
         } catch (IOException e) {
-            // Se não houver arquivo, tudo bem.
-        }
-    }
-
-    private void updatePetList() {
-        petListModel.clear();
-        for (Pet p : pets) {
-            petListModel.addElement(p.getNome() + " (" + p.getRaca() + ")");
-        }
-    }
-
-    private void updateMenuPetImage() {
-        int index = petList.getSelectedIndex();
-        if (index >= 0) {
-            Pet p = pets.get(index);
-            petImage.setIcon(new ImageIcon(p.getImagem()));
-        } else {
-            petImage.setIcon(null);
-        }
-    }
-
-    private void updatePetImage() {
-        if (currentPet != null) {
-            petImage.setIcon(new ImageIcon(currentPet.getImagem()));
+            // tudo bem se não existir arquivo
         }
     }
 
     public static void main(String[] args) {
-        SwingUtilities.invokeLater(VirtualPetGUI::new);
+        new VirtualPetGUI();
     }
 }
