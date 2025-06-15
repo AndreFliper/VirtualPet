@@ -23,8 +23,7 @@ public class VirtualPetGUI extends JFrame {
     private JProgressBar felicidadeBar = new JProgressBar(0, 100);
     private JProgressBar sujeiraBar = new JProgressBar(0, 100);
 
-    private JPanel cardsContainer = new JPanel(new GridLayout(0, 3, 20, 20)); // Layout com espaçamento
-
+    private JPanel cardsContainer = new JPanel(new GridLayout(0, 3, 20, 20));
     private Timer globalTimer;
 
     private HashMap<Pet, JProgressBar[]> petBarMap = new HashMap<>();
@@ -33,7 +32,7 @@ public class VirtualPetGUI extends JFrame {
         setTitle("Virtual Pet");
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         setLayout(new CardLayout());
-        setPreferredSize(new Dimension(800, 600)); // Para uso em PC
+        setPreferredSize(new Dimension(800, 600));
 
         buildCreatePanel();
         buildSelectPanel();
@@ -52,15 +51,7 @@ public class VirtualPetGUI extends JFrame {
         setVisible(true);
     }
 
-    private void escolherImagem() {
-        JFileChooser chooser = new JFileChooser();
-        int result = chooser.showOpenDialog(this);
-        if (result == JFileChooser.APPROVE_OPTION) {
-            File selected = chooser.getSelectedFile();
-            imagemField.setText(selected.getAbsolutePath());
-        }
-    }
-
+    // ----------Painéis----------
     private void buildCreatePanel() {
         panelCreate.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
         panelCreate.setLayout(new GridLayout(8, 2, 10, 10));
@@ -140,6 +131,15 @@ public class VirtualPetGUI extends JFrame {
         panelInteract.add(outputScroll, BorderLayout.CENTER);
     }
 
+    // ----------funções principais----------
+    private void escolherImagem() {
+        JFileChooser chooser = new JFileChooser();
+        int result = chooser.showOpenDialog(this);
+        if (result == JFileChooser.APPROVE_OPTION) {
+            imagemField.setText(chooser.getSelectedFile().getAbsolutePath());
+        }
+    }
+
     private void criarPet() {
         String tipo = (String) tipoBox.getSelectedItem();
         String nome = nomeField.getText().trim();
@@ -151,17 +151,21 @@ public class VirtualPetGUI extends JFrame {
             return;
         }
 
-        switch (tipo) {
-            case "Cachorro": currentPet = new Cachorro(nome, raca, imagem); break;
-            case "Gato": currentPet = new Gato(nome, raca, imagem); break;
-            case "Papagaio": currentPet = new Papagaio(nome, raca, imagem); break;
-            case "Hamster": currentPet = new Hamster(nome, raca, imagem); break;
-        }
-
+        currentPet = criarPetPorTipo(tipo, nome, raca, imagem);
         pets.add(currentPet);
         savePets();
         refreshCards();
         showPanel("Select");
+    }
+
+    private Pet criarPetPorTipo(String tipo, String nome, String raca, String imagem) {
+        return switch (tipo) {
+            case "Cachorro" -> new Cachorro(nome, raca, imagem);
+            case "Gato" -> new Gato(nome, raca, imagem);
+            case "Papagaio" -> new Papagaio(nome, raca, imagem);
+            case "Hamster" -> new Hamster(nome, raca, imagem);
+            default -> throw new IllegalArgumentException("Tipo inválido: " + tipo);
+        };
     }
 
     private void refreshCards() {
@@ -169,49 +173,9 @@ public class VirtualPetGUI extends JFrame {
         petBarMap.clear();
 
         for (Pet p : pets) {
-            JPanel card = new JPanel(new BorderLayout(5, 5));
-            card.setBorder(BorderFactory.createCompoundBorder(
-                    BorderFactory.createLineBorder(Color.LIGHT_GRAY, 1),
-                    BorderFactory.createEmptyBorder(10, 10, 10, 10)
-            ));
-            card.setBackground(Color.WHITE);
-
-            // Imagem em maior resolução
-            ImageIcon icon = new ImageIcon(new ImageIcon(p.getImagem()).getImage().getScaledInstance(150, 150, Image.SCALE_SMOOTH));
-            JLabel imgLabel = new JLabel(icon);
-            imgLabel.setHorizontalAlignment(JLabel.CENTER);
-
-            JLabel nameLabel = new JLabel("<html><b>" + p.getNome() + "</b><br/>Raça: " + p.getRaca() + "</html>");
-            nameLabel.setHorizontalAlignment(JLabel.CENTER);
-
-            JProgressBar happyBar = new JProgressBar(0, 100);
-            happyBar.setValue((int) p.getFelicidade());
-            happyBar.setStringPainted(true);
-
-            JProgressBar dirtBar = new JProgressBar(0, 100);
-            dirtBar.setValue((int) p.getSujeira());
-            dirtBar.setStringPainted(true);
-            dirtBar.setForeground(Color.ORANGE.darker());
-
-            JPanel barsPanel = new JPanel(new GridLayout(2, 1, 5, 5));
-            barsPanel.add(happyBar);
-            barsPanel.add(dirtBar);
-
-            JButton selectBtn = new JButton("Selecionar");
-            selectBtn.addActionListener(e -> {
-                currentPet = p;
-                updateInteractPanel();
-                showPanel("Interact");
-            });
-
-            card.add(nameLabel, BorderLayout.NORTH);
-            card.add(imgLabel, BorderLayout.CENTER);
-            card.add(barsPanel, BorderLayout.SOUTH);
-            card.add(selectBtn, BorderLayout.EAST);
-
+            PetCard card = new PetCard(p);
             cardsContainer.add(card);
-
-            petBarMap.put(p, new JProgressBar[]{happyBar, dirtBar});
+            petBarMap.put(p, new JProgressBar[]{card.happyBar, card.dirtBar});
         }
 
         cardsContainer.revalidate();
@@ -220,14 +184,8 @@ public class VirtualPetGUI extends JFrame {
     }
 
     private void updateInteractPanel() {
-        ImageIcon icon = new ImageIcon(new ImageIcon(currentPet.getImagem()).getImage().getScaledInstance(300, 300, Image.SCALE_SMOOTH));
-        petImageLabel.setIcon(icon);
-
-        felicidadeBar.setValue((int) currentPet.getFelicidade());
-        felicidadeBar.setString("Felicidade: " + (int) currentPet.getFelicidade() + "%");
-
-        sujeiraBar.setValue((int) currentPet.getSujeira());
-        sujeiraBar.setString("Sujeira: " + (int) currentPet.getSujeira() + "%");
+        petImageLabel.setIcon(new ImageIcon(new ImageIcon(currentPet.getImagem()).getImage().getScaledInstance(300, 300, Image.SCALE_SMOOTH)));
+        atualizarBarrasPet(currentPet, felicidadeBar, sujeiraBar);
     }
 
     private void interagir(String acao) {
@@ -249,6 +207,13 @@ public class VirtualPetGUI extends JFrame {
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(this, ex.getMessage());
         }
+    }
+    //atualiza felicidade e sujeira em tempo real
+    private void atualizarBarrasPet(Pet p, JProgressBar felicidade, JProgressBar sujeira) {
+        felicidade.setValue((int) p.getFelicidade());
+        felicidade.setString("Felicidade: " + (int) p.getFelicidade() + "%");
+        sujeira.setValue((int) p.getSujeira());
+        sujeira.setString("Sujeira: " + (int) p.getSujeira() + "%");
     }
 
     private void showPanel(String name) {
@@ -272,20 +237,10 @@ public class VirtualPetGUI extends JFrame {
             while ((line = reader.readLine()) != null) {
                 String[] parts = line.split(";");
                 if (parts.length == 4) {
-                    String tipo = parts[0];
-                    String nome = parts[1];
-                    String raca = parts[2];
-                    String imagem = parts[3];
-                    switch (tipo) {
-                        case "Cachorro" -> pets.add(new Cachorro(nome, raca, imagem));
-                        case "Gato" -> pets.add(new Gato(nome, raca, imagem));
-                        case "Papagaio" -> pets.add(new Papagaio(nome, raca, imagem));
-                        case "Hamster" -> pets.add(new Hamster(nome, raca, imagem));
-                    }
+                    pets.add(criarPetPorTipo(parts[0], parts[1], parts[2], parts[3]));
                 }
             }
-        } catch (IOException ignored) {
-        }
+        } catch (IOException ignored) {}
         refreshCards();
     }
 
@@ -294,25 +249,82 @@ public class VirtualPetGUI extends JFrame {
             for (Pet p : pets) {
                 p.decreaseHappiness(0.5);
                 p.increaseDirt(1.0);
-
                 JProgressBar[] bars = petBarMap.get(p);
-                if (bars != null) {
-                    bars[0].setValue((int) p.getFelicidade());
-                    bars[0].setString("Felicidade: " + (int) p.getFelicidade() + "%");
-                    bars[1].setValue((int) p.getSujeira());
-                    bars[1].setString("Sujeira: " + (int) p.getSujeira() + "%");
-                }
+                if (bars != null) atualizarBarrasPet(p, bars[0], bars[1]);
             }
-
-            if (currentPet != null) {
-                felicidadeBar.setValue((int) currentPet.getFelicidade());
-                felicidadeBar.setString("Felicidade: " + (int) currentPet.getFelicidade() + "%");
-                sujeiraBar.setValue((int) currentPet.getSujeira());
-                sujeiraBar.setString("Sujeira: " + (int) currentPet.getSujeira() + "%");
-            }
+            if (currentPet != null) atualizarBarrasPet(currentPet, felicidadeBar, sujeiraBar);
         });
         globalTimer.start();
     }
+
+    // ----------classe PetCard ----------
+    private class PetCard extends JPanel {
+        JProgressBar happyBar = new JProgressBar(0, 100);
+        JProgressBar dirtBar = new JProgressBar(0, 100);
+
+        public PetCard(Pet p) {
+            setLayout(new BorderLayout(5, 5));
+            setBorder(BorderFactory.createCompoundBorder(
+                    BorderFactory.createLineBorder(Color.LIGHT_GRAY, 1),
+                    BorderFactory.createEmptyBorder(10, 10, 10, 10)
+            ));
+            setBackground(Color.WHITE);
+
+            // Imagem do pet
+            ImageIcon icon = new ImageIcon(new ImageIcon(p.getImagem()).getImage().getScaledInstance(150, 150, Image.SCALE_SMOOTH));
+            JLabel imgLabel = new JLabel(icon);
+            imgLabel.setHorizontalAlignment(JLabel.CENTER);
+
+            // Nome e raça
+            JLabel nameLabel = new JLabel("<html><b>" + p.getNome() + "</b><br/>Raça: " + p.getRaca() + "</html>");
+            nameLabel.setHorizontalAlignment(JLabel.CENTER);
+
+            // Barras
+            happyBar.setValue((int) p.getFelicidade());
+            happyBar.setStringPainted(true);
+
+            dirtBar.setValue((int) p.getSujeira());
+            dirtBar.setStringPainted(true);
+            dirtBar.setForeground(Color.ORANGE.darker());
+
+            JPanel barsPanel = new JPanel(new GridLayout(2, 1, 5, 5));
+            barsPanel.add(happyBar);
+            barsPanel.add(dirtBar);
+
+            // Botões
+            JPanel buttonsPanel = new JPanel(new GridLayout(2, 1, 5, 5));
+
+            JButton selectBtn = new JButton("Selecionar");
+            selectBtn.addActionListener(e -> {
+                currentPet = p;
+                updateInteractPanel();
+                showPanel("Interact");
+            });
+
+            JButton deleteBtn = new JButton("Deletar");
+            deleteBtn.addActionListener(e -> {
+                int confirm = JOptionPane.showConfirmDialog(this,
+                        "Tem certeza que deseja deletar " + p.getNome() + "?",
+                        "Confirmação",
+                        JOptionPane.YES_NO_OPTION);
+                if (confirm == JOptionPane.YES_OPTION) {
+                    pets.remove(p);
+                    savePets();
+                    refreshCards();
+                }
+            });
+
+            buttonsPanel.add(selectBtn);
+            buttonsPanel.add(deleteBtn);
+
+            //Montagem final
+            add(nameLabel, BorderLayout.NORTH);
+            add(imgLabel, BorderLayout.CENTER);
+            add(barsPanel, BorderLayout.SOUTH);
+            add(buttonsPanel, BorderLayout.EAST);
+        }
+    }
+
 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(VirtualPetGUI::new);

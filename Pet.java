@@ -45,17 +45,17 @@ public abstract class Pet {
     }
 
     public String passear() {
-        felicidade = Math.min(100, felicidade + 10);
+        felicidade = Math.min(100, felicidade + 50);
         return nome + " adorou o passeio e ficou feliz";
-    }
-
-    public void darBanho() {
-        sujeira = 0.0;
     }
 
     public String petisco() {
         felicidade = Math.min(100, felicidade + 5);
         return nome + " amou o petisco e ficou alegre";
+    }
+
+    public void darBanho() {
+        sujeira = 0.0;
     }
 
     public abstract String falar();

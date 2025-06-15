@@ -1,1 +1,3 @@
-Cachorro;Bulaxa;Vagabundo;C:\Users\andre.rocha\Downloads\bulaxa.png
+Gato;Cheddar;Laranjinha;C:\Users\andre.rocha\Pictures\pets\cheddar.png
+Gato;Suquinho;Laranjinha;C:\Users\andre.rocha\Pictures\pets\suquinho.png
+Cachorro;Bulaxa;Vira-lata;C:\Users\andre.rocha\Pictures\pets\bulaxa.png
