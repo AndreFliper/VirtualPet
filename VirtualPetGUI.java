@@ -175,16 +175,10 @@ public class VirtualPetGUI extends JFrame {
             if (nome.isEmpty() || raca.isEmpty() || imagem.isEmpty()) {
                 throw new InvalidPetDataException("Preencha todos os campos.");
             }
-            currentPet = criarPetPorTipo(tipo, nome, raca, imagem);
-            pets.add(currentPet);
-            savePets();
-            refreshCards();
-            showPanel("Select");
         } catch (InvalidPetDataException ex) {
             JOptionPane.showMessageDialog(this, ex.getMessage());
         }
-
-        //salva o pet e volta pra seleção
+        
         currentPet = criarPetPorTipo(tipo, nome, raca, imagem);
         pets.add(currentPet);
         savePets();
